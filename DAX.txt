@@ -1,0 +1,194 @@
+Cash_C F Q1 = CALCULATE([Mov F Q1]+[Others F Q1];All(Cat[Category];Cat[Order Category]))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Fcst Q1 = CALCULATE(IF(
+    MAX('Main'[Order Category])=2;
+    [Mov F Q1];
+    If(
+        MAX('Main'[Order Category])=7;
+        [Cash_C F Q1];
+        IF(
+            MAX('Main'[Order Category])=8;
+            [Cash_P F Q1];
+            [Others F Q1]
+        )
+    )))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Forecast = SUM(Forecast[Valor])
+// VAR Mes = MONTH(Now())
+// Return
+// If(Mes in {1;2;3};
+//     CALCULATE(SUM(Forecast[Valor]);KEEPFILTERS(FILTER(All('Date'[Date]);MONTH('Date'[Date]) in {1;2;3;4;5;6;7;8;9;10;11;12})));
+//     IF(Mes in {4;5;6};
+//         CALCULATE(SUM(Forecast[Valor]);KEEPFILTERS(FILTER(All('Date'[Date]);MONTH('Date'[Date]) in {4;5;6;7;8;9;10;11;12})));
+//         IF(Mes in {7;8;9};
+//             CALCULATE(SUM(Forecast[Valor]);KEEPFILTERS(FILTER(All('Date'[Date]);MONTH('Date'[Date]) in {7;8;9;10;11;12})));
+//             CALCULATE(SUM(Forecast[Valor]);KEEPFILTERS(FILTER(All('Date'[Date]);MONTH('Date'[Date]) in {10;11;12}))))))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Mov F Q1 = //Calculo de Mov para current forecast 
+Var cierre_Prev = CALCULATE(SUM(Main[Value]);FILTER(ALL('Date'[Date]);MONTH('Date'[Date])=12&&YEAR('Date'[Date])=YEAR(NOW())-1);KEEPFILTERS(FILTER(ALL(Cat[Category];Cat[Order Category]);Cat[Category]="Working Capital")))
+Var cierre = CALCULATE([Forecast];FILTER(ALL('Date'[Date]);MONTH('Date'[Date])=3);KEEPFILTERS(FILTER(ALL(Cat[Category];Cat[Order Category]);Cat[Category]="Working Capital")))
+Return If(cierre=0;BLANK();CALCULATE(cierre_Prev-cierre))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Mov PF Q1 = //Calculo de Mov para previous forecast 
+Var cierre_Prev = CALCULATE(SUM(Main[Value]);FILTER(ALL('Date'[Date]);MONTH('Date'[Date])=12 && YEAR('Date'[Date])=YEAR(NOW())-1);KEEPFILTERS(FILTER(ALL(Cat[Category];Cat[Order Category]);Cat[Category]="Working Capital")))
+Var cierre = CALCULATE([Prev Forecast];FILTER(ALL('Date'[Date]);MONTH('Date'[Date])=3);KEEPFILTERS(FILTER(ALL(Cat[Category];Cat[Order Category]);Cat[Category]="Working Capital")))
+Return If(cierre=0;BLANK();CALCULATE(cierre_Prev-cierre))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Others F Q1 = CALCULATE([Forecast];FILTER(ALL('Date'[Date]);MONTH('Date'[Date]) in {1;2;3});
+        KEEPFILTERS(FILTER(ALL(Cat[Category]);
+        Cat[Category] in {"Underlying Operating Profit";"Gross Capex";"Assets & Disposal"; "Elim of P&L";"Depreciation";"M&A Related Cost"})))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Prev Fcst Q1 = CALCULATE(IF(
+    MAX('Main'[Order Category])=2;
+    [Mov PF Q1];
+    If(
+        MAX('Main'[Order Category])=7;
+        [Cash_C PF Q1];
+        IF(
+            MAX('Main'[Order Category])=8;
+            [Cash_P PF Q1];
+            [Others PF Q1]
+        )
+    )))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+AAverage = Var _1 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-1;Month))
+Var Mes_actual = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital")))
+Var _2 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-2;Month))
+Var _3 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-3;Month))
+Var _4 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-4;Month))
+Var _5 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-5;Month))
+Var _6 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-6;Month))
+Var _7 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-7;Month))
+Var _8 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-8;Month))
+Var _9 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-9;Month))
+Var _10 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-10;Month))
+Var _11 = CALCULATE([Month Average];KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-11;Month))
+Return If(ISBLANK(Mes_actual);BLANK();CALCULATE(DIVIDE(Mes_actual+_1+_2+_3+_4+_5+_6+_7+_8+_9+_10+_11;12)))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+CCC = [Days Inventories]+[Days Payables]+[Days Receivables]
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Cierres = CALCULATE(SUM(Main[Value]);KEEPFILTERS((FILTER(ALL('Date'[Date]);(MONTH('Date'[Date])<MONTH(NOW())&&YEAR('Date'[Date])=YEAR(NOW()))||YEAR('Date'[Date])<YEAR(NOW()) ))))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Days Inventories = Var Numerador = CALCULATE([AAverage];KEEPFILTERS(FILTER(ALL(Main[Category 1]);Main[Category 1]="Inventories")))
+Return CALCULATE(DIVIDE(Numerador*365;-[Denominador Inventories]))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+December closed Month = CALCULATE([Cierres];MONTH('Date'[Date])=12;YEAR('Date'[Date])=YEAR(NOW())-1)
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Denominador Inventories = 
+Var Mes_actual = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost")))
+Var _1 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-1;Month))
+Var _2 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-2;Month))
+Var _3 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-3;Month))
+Var _4 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-4;Month))
+Var _5 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-5;Month))
+Var _6 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-6;Month))
+Var _7 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-7;Month))
+Var _8 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-8;Month))
+Var _9 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-9;Month))
+Var _10 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-10;Month))
+Var _11 = CALCULATE(SUM(Main[Value]);KEEPFILTERS(FILTER(ALL(Main[Category]);Main[Category]="Supply Chain Cost"));DATEADD('Date'[Date].[Date];-11;Month))
+Return Mes_actual+_1+_2+_3+_4+_5+_6+_7+_8+_9+_10+_11
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Free Cash Flow = CALCULATE(IF(
+    MAX('Main'[Order Category])=2;
+    [Woking Capital Movement];
+    If(
+        MAX('Main'[Order Category])=7;
+        [Cash_C];
+        IF(
+            MAX('Main'[Order Category])=8;
+            [Cash_P];
+            [Others]
+        )
+    ));KEEPFILTERS((FILTER(ALL('Date'[Date]);(MONTH('Date'[Date])<MONTH(NOW())&&YEAR('Date'[Date])=YEAR(NOW()))||YEAR('Date'[Date])<YEAR(NOW()) ))))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Woking Capital Movement = 
+Var Mes_anterior = CALCULATE(SUM('Main'[Value]);KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital"));DATEADD('Date'[Date].[Date];-1;Month))
+Var Mes_actual = CALCULATE(SUM('Main'[Value]);KEEPFILTERS(FILTER(All('Main'[Category]);'Main'[Category]="Working Capital")))
+Return CALCULATE(Mes_anterior-Mes_actual)
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+YTD = Var YTD_ =IF(
+    MAX('Main'[Order Category])=2;
+    [Working YTD];
+    If(
+        MAX('Main'[Order Category])=7;
+        [Cash_C YTD];
+        IF(
+            MAX('Main'[Order Category])=8;
+            [Cash_P YTD];
+            [Others YTD]
+        )
+    ))
+Return YTD_
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Main = UNION(SUMMARIZE(GLBalance;GLBalance[Category 1];GLBalance[Category 2];GLBalance[Category 3];GLBalance[Country];GLBalance[Date];GLBalance[Order Caategory];"Value";SUM(GLBalance[Value]));
+SUMMARIZE('Buttom Lane';'Buttom Lane'[Category 1];'Buttom Lane'[Category 2];'Buttom Lane'[Category 3];'Buttom Lane'[Country];'Buttom Lane'[Date];'Buttom Lane'[Order Category];"Value";SUM('Buttom Lane'[Value]));
+SUMMARIZE(TUS;TUS[Category 1];TUS[Category 2];TUS[Category 3];TUS[Country];TUS[Date];TUS[Order Category];"Value";SUM(TUS[Value]));
+SUMMARIZE(Depreciation;Depreciation[Category 1];Depreciation[Category 2];Depreciation[Category 3];Depreciation[Country];Depreciation[Date];Depreciation[Order Category];"Value";SUM(Depreciation[Value]));
+SUMMARIZE(Cash;Cash[Categoria 1];Cash[Categoria 2];Cash[Categoria 3];Cash[Country];Cash[Date];Cash[Order Category];"Value";SUM(Cash[Valor]));
+SUMMARIZE('TUS Historico';'TUS Historico'[Category 1];'TUS Historico'[Category 2];'TUS Historico'[Category 3];'TUS Historico'[Country];'TUS Historico'[Date];'TUS Historico'[Order Category];"Value";SUM('TUS Historico'[Value])))
+
+########################################################################################################################################################
+########################################################################################################################################################
+
+Forecast = UNION(SUMMARIZE('F Inventories';'F Inventories'[Category 1];'F Inventories'[Category 2];'F Inventories'[Category 3];'F Inventories'[Country];'F Inventories'[Date];'F Inventories'[Order Category];"Value";SUM('F Inventories'[Value]));
+SUMMARIZE('F Receivables';'F Receivables'[Category 1];'F Receivables'[Category 2];'F Receivables'[Category 3];'F Receivables'[Country];'F Receivables'[Date];'F Receivables'[Order Category];"Value";SUM('F Receivables'[Value]));
+SUMMARIZE('F Payables';'F Payables'[Category 1];'F Payables'[Category 2];'F Payables'[Category 3];'F Payables'[Country];'F Payables'[Date];'F Payables'[Order Category];"Value";SUM('F Payables'[Value]));
+SUMMARIZE('F Capex';'F Capex'[Category 1];'F Capex'[Category 2];'F Capex'[Category 3];'F Capex'[Country];'F Capex'[Date];'F Capex'[Order Category];"Value";SUM('F Capex'[Value]));
+SUMMARIZE('F Depreciaction';'F Depreciaction'[Category 1];'F Depreciaction'[Category 2];'F Depreciaction'[Category 3];'F Depreciaction'[Country];'F Depreciaction'[Date];'F Depreciaction'[Order Category];"Value";SUM('F Depreciaction'[Value]));
+SUMMARIZE('F Elim';'F Elim'[Category 1];'F Elim'[Category 2];'F Elim'[Category 3];'F Elim'[Country];'F Elim'[Date];'F Elim'[Order Category];"Value";SUM('F Elim'[Value]));
+SUMMARIZE('F M&A Related Cost';'F M&A Related Cost'[Category 1];'F M&A Related Cost'[Category 2];'F M&A Related Cost'[Category 3];'F M&A Related Cost'[Country];'F M&A Related Cost'[Date];'F M&A Related Cost'[Order Catogory];"Value";SUM('F M&A Related Cost'[Value]));
+SUMMARIZE('F Supply Chain Cost';'F Supply Chain Cost'[Category 1];'F Supply Chain Cost'[Category 2];'F Supply Chain Cost'[Category 3];'F Supply Chain Cost'[Country];'F Supply Chain Cost'[Date];'F Supply Chain Cost'[Order Category];"Value";SUM('F Supply Chain Cost'[Value]));
+SUMMARIZE('F TurnOver';'F TurnOver'[Category 1];'F TurnOver'[Category 2];'F TurnOver'[Category 3];'F TurnOver'[Country];'F TurnOver'[Date];'F TurnOver'[Order Category];"Value";SUM('F TurnOver'[Value]));
+SUMMARIZE('F UOP';'F UOP'[Category 1];'F UOP'[Category 2];'F UOP'[Category 3];'F UOP'[Country];'F UOP'[Date];'F UOP'[Order Category];"Value";SUM('F UOP'[Value]));
+SUMMARIZE(Cash;Cash[Categoria 1];Cash[Categoria 2];Cash[Categoria 3];Cash[Country];Cash[Date];Cash[Order Category];"Value";SUM(Cash[Valor]));
+SUMMARIZE('F Assets & Disposal';'F Assets & Disposal'[Category 1];'F Assets & Disposal'[Category 2];'F Assets & Disposal'[Category 3];'F Assets & Disposal'[Country];'F Assets & Disposal'[Date];'F Assets & Disposal'[Order Category];"Value";SUM('F Assets & Disposal'[Value]))
+)
